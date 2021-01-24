@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'package:path/path.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_trimmer/src/file_formats.dart';
 import 'package:video_trimmer/src/storage_dir.dart';
@@ -18,8 +16,6 @@ import 'package:video_trimmer/src/trim_editor.dart';
 /// * [videPlaybackControl()]
 class Trimmer {
   static File currentVideoFile;
-
-  final FlutterFFmpeg _flutterFFmpeg = new FlutterFFmpeg();
 
   /// Loads a video using the path provided.
   ///
@@ -151,112 +147,21 @@ class Trimmer {
   /// video format is passed in [customVideoFormat], then the app may
   /// crash.
   ///
-  Future<String> saveTrimmedVideo({
+  Future<MediaInfo> saveTrimmedVideo({
     @required double startValue,
     @required double endValue,
     bool applyVideoEncoding = false,
-    FileFormat outputFormat,
-    String ffmpegCommand,
-    String customVideoFormat,
-    int fpsGIF,
-    int scaleGIF,
-    String videoFolderName,
-    String videoFileName,
-    StorageDir storageDir,
+    VideoQuality videoQuality = VideoQuality.DefaultQuality,
   }) async {
     final String _videoPath = currentVideoFile.path;
-    final String _videoName = basename(_videoPath).split('.')[0];
-
-    String _command;
-
-    // Formatting Date and Time
-    String dateTime = DateFormat.yMMMd()
-        .addPattern('-')
-        .add_Hms()
-        .format(DateTime.now())
-        .toString();
-
-    // String _resultString;
-    String _outputPath;
-    String _outputFormatString;
-    String formattedDateTime = dateTime.replaceAll(' ', '');
-
-    print("DateTime: $dateTime");
-    print("Formatted: $formattedDateTime");
-
-    if (videoFolderName == null) {
-      videoFolderName = "Trimmer";
-    }
-
-    if (videoFileName == null) {
-      videoFileName = "${_videoName}_trimmed:$formattedDateTime";
-    }
-
-    videoFileName = videoFileName.replaceAll(' ', '_');
-
-    String path = await _createFolderInAppDocDir(
-      videoFolderName,
-      storageDir,
-    ).whenComplete(
-      () => print("Retrieved Trimmer folder"),
+    MediaInfo mediaInfo = await VideoCompress.compressVideo(
+      _videoPath,
+      quality: videoQuality,
+      deleteOrigin: true,
+      startTime: startValue.toInt(),
+      duration: endValue.toInt() - startValue.toInt(),
     );
-
-    Duration startPoint = Duration(milliseconds: startValue.toInt());
-    Duration endPoint = Duration(milliseconds: endValue.toInt());
-
-    // Checking the start and end point strings
-    print("Start: ${startPoint.toString()} & End: ${endPoint.toString()}");
-
-    print(path);
-
-    if (outputFormat == null) {
-      outputFormat = FileFormat.mp4;
-      _outputFormatString = outputFormat.toString();
-      print('OUTPUT: $_outputFormatString');
-    } else {
-      _outputFormatString = outputFormat.toString();
-    }
-
-    String _trimLengthCommand =
-        ' -ss $startPoint -i "$_videoPath" -t ${endPoint - startPoint} -avoid_negative_ts make_zero ';
-
-    if (ffmpegCommand == null) {
-      _command = '$_trimLengthCommand -c:a copy ';
-
-      if (!applyVideoEncoding) {
-        _command += '-c:v copy ';
-      }
-
-      if (outputFormat == FileFormat.gif) {
-        if (fpsGIF == null) {
-          fpsGIF = 10;
-        }
-        if (scaleGIF == null) {
-          scaleGIF = 480;
-        }
-        _command =
-            '$_trimLengthCommand -vf "fps=$fpsGIF,scale=$scaleGIF:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 ';
-      }
-    } else {
-      _command = '$_trimLengthCommand $ffmpegCommand ';
-      _outputFormatString = customVideoFormat;
-    }
-
-    _outputPath = '$path$videoFileName$_outputFormatString';
-
-    _command += '"$_outputPath"';
-
-    await _flutterFFmpeg.execute(_command).whenComplete(() {
-      print('Got value');
-      debugPrint('Video successfuly saved');
-      // _resultString = 'Video successfuly saved';
-    }).catchError((error) {
-      print('Error');
-      // _resultString = 'Couldn\'t save the video';
-      debugPrint('Couldn\'t save the video');
-    });
-
-    return _outputPath;
+    return mediaInfo;
   }
 
   /// For getting the video controller state, to know whether the

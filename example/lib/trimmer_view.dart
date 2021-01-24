@@ -4,7 +4,9 @@ import 'package:video_trimmer/video_trimmer.dart';
 
 class TrimmerView extends StatefulWidget {
   final Trimmer _trimmer;
+
   TrimmerView(this._trimmer);
+
   @override
   _TrimmerViewState createState() => _TrimmerViewState();
 }
@@ -28,7 +30,7 @@ class _TrimmerViewState extends State<TrimmerView> {
         .then((value) {
       setState(() {
         _progressVisibility = false;
-        _value = value;
+        _value = value.path;
       });
     });
 

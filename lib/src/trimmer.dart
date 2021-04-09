@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
@@ -15,15 +14,15 @@ import 'package:video_trimmer/src/trim_editor.dart';
 /// * [saveTrimmedVideo()]
 /// * [videPlaybackControl()]
 class Trimmer {
-  static File currentVideoFile;
+  static File? currentVideoFile;
 
   /// Loads a video using the path provided.
   ///
   /// Returns the loaded video file.
-  Future<void> loadVideo({@required File videoFile}) async {
+  Future<void> loadVideo({required File videoFile}) async {
     currentVideoFile = videoFile;
     if (currentVideoFile != null) {
-      videoPlayerController = VideoPlayerController.file(currentVideoFile);
+      videoPlayerController = VideoPlayerController.file(currentVideoFile!);
       await videoPlayerController.initialize().then((_) {
         TrimEditor(
           viewerHeight: 50,
@@ -41,9 +40,9 @@ class Trimmer {
 
   Future<String> _createFolderInAppDocDir(
     String folderName,
-    StorageDir storageDir,
+    StorageDir? storageDir,
   ) async {
-    Directory _directory;
+    Directory? _directory;
 
     if (storageDir == null) {
       _directory = await getApplicationDocumentsDirectory();
@@ -65,7 +64,7 @@ class Trimmer {
 
     // Directory + folder name
     final Directory _directoryFolder =
-        Directory('${_directory.path}/$folderName/');
+        Directory('${_directory!.path}/$folderName/');
 
     if (await _directoryFolder.exists()) {
       // If folder already exists return path
@@ -147,19 +146,19 @@ class Trimmer {
   /// video format is passed in [customVideoFormat], then the app may
   /// crash.
   ///
-  Future<MediaInfo> saveTrimmedVideo({
-    @required double startValue,
-    @required double endValue,
+  Future<MediaInfo?> saveTrimmedVideo({
+    required int startValue,
+    required int endValue,
     bool applyVideoEncoding = false,
     VideoQuality videoQuality = VideoQuality.DefaultQuality,
   }) async {
-    final String _videoPath = currentVideoFile.path;
-    MediaInfo mediaInfo = await VideoCompress.compressVideo(
+    final String _videoPath = currentVideoFile!.path;
+    MediaInfo? mediaInfo = await VideoCompress.compressVideo(
       _videoPath,
       quality: videoQuality,
       deleteOrigin: true,
-      startTime: startValue.toInt(),
-      duration: endValue.toInt() - startValue.toInt(),
+      startTime: startValue,
+      duration: (endValue - startValue).abs(),
     );
     return mediaInfo;
   }
@@ -175,8 +174,8 @@ class Trimmer {
   /// Returns a `Future<bool>`, if `true` then video is playing
   /// otherwise paused.
   Future<bool> videPlaybackControl({
-    @required double startValue,
-    @required double endValue,
+    required double startValue,
+    required double endValue,
   }) async {
     if (videoPlayerController.value.isPlaying) {
       await videoPlayerController.pause();
@@ -195,7 +194,7 @@ class Trimmer {
     }
   }
 
-  File getVideoFile() {
+  File? getVideoFile() {
     return currentVideoFile;
   }
 }

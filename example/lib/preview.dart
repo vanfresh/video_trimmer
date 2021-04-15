@@ -1,7 +1,5 @@
-import 'dart:io';
-
+import 'package:better_player/better_player.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 
 class Preview extends StatefulWidget {
   final String? outputVideoPath;
@@ -13,17 +11,16 @@ class Preview extends StatefulWidget {
 }
 
 class _PreviewState extends State<Preview> {
-  late VideoPlayerController _controller;
+  late BetterPlayerController _controller;
 
   @override
   void initState() {
+    _controller = BetterPlayerController(
+      BetterPlayerConfiguration(fit: BoxFit.contain, autoPlay: true),
+      betterPlayerDataSource:
+          BetterPlayerDataSource.file(widget.outputVideoPath!),
+    );
     super.initState();
-
-    _controller = VideoPlayerController.file(File(widget.outputVideoPath!))
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
-      });
   }
 
   @override
@@ -40,20 +37,14 @@ class _PreviewState extends State<Preview> {
         title: Text("Preview"),
       ),
       body: Center(
-        child: AspectRatio(
-          aspectRatio: _controller.value.aspectRatio,
-          child: _controller.value.isInitialized
-              ? Container(
-                  child: VideoPlayer(_controller),
-                )
-              : Container(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-        ),
+        child: _controller.videoPlayerController?.value.initialized ?? false
+            ? Container(
+                child: BetterPlayer(controller: _controller),
+              )
+            : Container(
+                child: Center(
+                child: CircularProgressIndicator(backgroundColor: Colors.white),
+              )),
       ),
     );
   }

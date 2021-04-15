@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:better_player/better_player.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
-import 'package:video_player/video_player.dart';
 import 'package:video_trimmer/src/file_formats.dart';
 import 'package:video_trimmer/src/storage_dir.dart';
 import 'package:video_trimmer/src/trim_editor.dart';
@@ -12,7 +14,7 @@ import 'package:video_trimmer/src/trim_editor.dart';
 /// are:
 /// * [loadVideo()]
 /// * [saveTrimmedVideo()]
-/// * [videPlaybackControl()]
+/// * [videoPlaybackControl()]
 class Trimmer {
   static File? currentVideoFile;
 
@@ -22,19 +24,24 @@ class Trimmer {
   Future<void> loadVideo({required File videoFile}) async {
     currentVideoFile = videoFile;
     if (currentVideoFile != null) {
-      videoPlayerController = VideoPlayerController.file(currentVideoFile!);
-      await videoPlayerController.initialize().then((_) {
-        TrimEditor(
-          viewerHeight: 50,
-          viewerWidth: 50.0 * 8,
-          // currentVideoFile: currentVideoFile,
-        );
+      playerController = BetterPlayerController(
+        BetterPlayerConfiguration(
+          fit: BoxFit.contain,
+          deviceOrientationsAfterFullScreen: [DeviceOrientation.portraitUp],
+          deviceOrientationsOnFullScreen: [DeviceOrientation.portraitUp],
+        ),
+        betterPlayerDataSource:
+            BetterPlayerDataSource.file(currentVideoFile!.path),
+      );
+      playerController.addEventsListener((event) {
+        if (event.betterPlayerEventType == BetterPlayerEventType.initialized) {
+          TrimEditor(
+            viewerHeight: 50,
+            viewerWidth: 50.0 * 8,
+            // currentVideoFile: currentVideoFile,
+          );
+        }
       });
-      // TrimEditor(
-      //   viewerHeight: 50,
-      //   viewerWidth: 50.0 * 8,
-      //   // currentVideoFile: currentVideoFile,
-      // );
     }
   }
 
@@ -173,22 +180,24 @@ class Trimmer {
   ///
   /// Returns a `Future<bool>`, if `true` then video is playing
   /// otherwise paused.
-  Future<bool> videPlaybackControl({
+  Future<bool> videoPlaybackControl({
     required double startValue,
     required double endValue,
   }) async {
-    if (videoPlayerController.value.isPlaying) {
-      await videoPlayerController.pause();
+    if (playerController.isPlaying() ?? false) {
+      await playerController.pause();
       return false;
     } else {
-      if (videoPlayerController.value.position.inMilliseconds >=
-          endValue.toInt()) {
-        await videoPlayerController
+      final position =
+          (await playerController.videoPlayerController?.position) ??
+              Duration.zero;
+      if (position.inMilliseconds >= endValue.toInt()) {
+        await playerController
             .seekTo(Duration(milliseconds: startValue.toInt()));
-        await videoPlayerController.play();
+        await playerController.play();
         return true;
       } else {
-        await videoPlayerController.play();
+        await playerController.play();
         return true;
       }
     }

@@ -16,7 +16,7 @@ dependencies:
 
   cupertino_icons: ^1.0.2
   image_picker: ^0.7.4
-  video_player: ^2.1.1
+  better_player: ^0.0.64
   file_picker: ^3.0.1
 
 dev_dependencies:

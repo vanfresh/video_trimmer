@@ -1,5 +1,5 @@
+import 'package:better_player/better_player.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'package:video_trimmer/src/trim_editor.dart';
 
 class VideoViewer extends StatefulWidget {
@@ -52,24 +52,16 @@ class _VideoViewerState extends State<VideoViewer> {
       child: Padding(
         padding: widget.padding,
         child: AspectRatio(
-          aspectRatio: videoPlayerController.value.aspectRatio,
-          child: videoPlayerController.value.isInitialized
-              ? Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      width: widget.borderWidth,
-                      color: widget.borderColor,
-                    ),
-                  ),
-                  child: VideoPlayer(videoPlayerController),
-                )
-              : Container(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                ),
+          aspectRatio: playerController.getAspectRatio() ?? 9.0 / 16.0,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                width: widget.borderWidth,
+                color: widget.borderColor,
+              ),
+            ),
+            child: BetterPlayer(controller: playerController),
+          ),
         ),
       ),
     );

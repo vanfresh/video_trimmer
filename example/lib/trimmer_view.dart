@@ -116,7 +116,7 @@ class _TrimmerViewState extends State<TrimmerView> {
                           ),
                     onPressed: () async {
                       bool playbackState =
-                          await widget._trimmer.videPlaybackControl(
+                          await widget._trimmer.videoPlaybackControl(
                         startValue: _startValue,
                         endValue: _endValue,
                       );
